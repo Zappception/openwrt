@@ -7,6 +7,14 @@
 / {
 	compatible = "avm,fritz7490", "lantiq,xway", "lantiq,vr9";
 	model = "AVM FRITZ!Box 7490";
+
+	remoteproc-wasp {
+		compatible = "avm,fritzbox7490-wasp";
+		mdio-device = <&gswip_mdio>;
+		link-interface = <&port5>;
+		reset-gpios = <&gpio 34 GPIO_ACTIVE_HIGH>;
+		power-gpios = <&gpio 5 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &aliases {

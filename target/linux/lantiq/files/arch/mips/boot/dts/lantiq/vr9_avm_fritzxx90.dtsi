@@ -70,6 +70,19 @@
 	lantiq,gphy-mode = <GPHY_MODE_GE>;
 };
 
+&gswip_ports {
+	port5: port@5 {
+		reg = <5>;
+		label = "lan-wasp";
+		phy-mode = "rgmii";
+
+		fixed-link {
+			speed = <1000>;
+			full-duplex;
+		};
+	};
+};
+
 &gpio {
 	pinctrl-names = "default";
 	pinctrl-0 = <&state_default>;
