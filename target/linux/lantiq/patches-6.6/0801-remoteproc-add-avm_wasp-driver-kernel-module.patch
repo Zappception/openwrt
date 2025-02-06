@@ -26,7 +26,7 @@ Tested-by: Timo Dorfner <timo.capa@gmail.com> # tested on Fritzbox 7490
 ---
  drivers/remoteproc/Kconfig    |   10 +
  drivers/remoteproc/Makefile   |    1 +
- drivers/remoteproc/avm_wasp.c | 1051 +++++++++++++++++++++++++++++++++
+ drivers/remoteproc/avm_wasp.c | 1052 +++++++++++++++++++++++++++++++++
  3 files changed, 1062 insertions(+)
  create mode 100644 drivers/remoteproc/avm_wasp.c
 
@@ -61,7 +61,7 @@ Tested-by: Timo Dorfner <timo.capa@gmail.com> # tested on Fritzbox 7490
  obj-$(CONFIG_MTK_SCP)			+= mtk_scp.o mtk_scp_ipi.o
 --- /dev/null
 +++ b/drivers/remoteproc/avm_wasp.c
-@@ -0,0 +1,1051 @@
+@@ -0,0 +1,1052 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * AVM WASP Remote Processor driver
@@ -80,7 +80,8 @@ Tested-by: Timo Dorfner <timo.capa@gmail.com> # tested on Fritzbox 7490
 +#include <linux/remoteproc.h>
 +#include <linux/timekeeping.h>
 +#include <net/sock.h>
-+#include <asm-generic/gpio.h>
++//#include <asm-generic/gpio.h>
++#include <linux/gpio.h>
 +
 +#include "remoteproc_internal.h"
 +
