@@ -51,7 +51,7 @@ define Build/arcadyan-trx
 	rm $@.hsqs $@.tail
 endef
 
-define Build/dna-header
+define Build/inteno-y3-header
 	BC='$(STAGING_DIR_HOST)/bin/bc' ;\
 	ubifsofs="1024" ;\
 	ubifs="$$(stat -c%s $@)" ;\
@@ -67,12 +67,12 @@ define Build/dna-header
 	echo "IntenoIopY" > $@.tmp ;\
 	echo "version 5" >> $@.tmp ;\
 	echo "integrity MD5SUM" >> $@.tmp ;\
-	echo "board EX400" >> $@.tmp ;\
-	echo "chip 7621" >> $@.tmp ;\
-	echo "arch all mipsel_1004kc" >> $@.tmp ;\
-	echo "model EX400" >> $@.tmp ;\
-	echo "release EX400-X-DNA-4.3.6.100-R-210518_0935" >> $@.tmp ;\
-	echo "customer DNA" >> $@.tmp ;\
+	echo "board $(word 1,$(1))" >> $@.tmp ;\
+	echo "chip $(patsubst mt%,%,$(SOC:bcm%=%))" >> $@.tmp ;\
+	echo "arch all $(CONFIG_TARGET_ARCH_PACKAGES)" >> $@.tmp ;\
+	echo "model $(word 1,$(1))" >> $@.tmp ;\
+	echo "release $(DEVICE_IMG_PREFIX)" >> $@.tmp ;\
+	echo "customer $(if $(CONFIG_VERSION_DIST),$(CONFIG_VERSION_DIST),OpenWrt)" >> $@.tmp ;\
 	echo "ubifsofs $${ubifsofs}" >> $@.tmp ;\
 	echo "ubifs $${ubifs}" >> $@.tmp ;\
 	echo "pkginfoofs $${pkginfoofs}" >> $@.tmp ;\
@@ -91,7 +91,7 @@ define Build/dna-header
 	mv $@.tmp $@
 endef
 
-define Build/dna-bootfs
+define Build/inteno-bootfs
 	mkdir -p $@.ubifs-dir/boot
 
 	# populate the boot fs with the dtb and the kernel image
@@ -313,6 +313,23 @@ define Device/ampedwireless_ally-00x19k
   DEVICE_MODEL := ALLY-00X19K
 endef
 TARGET_DEVICES += ampedwireless_ally-00x19k
+
+define Device/arcadyan_we410443
+  $(Device/dsa-migration)
+  $(Device/uimage-lzma-loader)
+  DEVICE_VENDOR := Arcadyan
+  DEVICE_MODEL := WE410443
+  IMAGE_SIZE := 32128k
+  KERNEL_SIZE := 4352k
+  KERNEL := kernel-bin | append-dtb | lzma | loader-kernel | \
+	uImage none | arcadyan-trx 0x746f435d
+  KERNEL_INITRAMFS := kernel-bin | append-dtb | lzma | loader-kernel | \
+	uImage none
+  IMAGE/sysupgrade.bin := append-kernel | pad-to $$$$(KERNEL_SIZE) | \
+	append-rootfs | pad-rootfs | check-size | append-metadata
+  DEVICE_PACKAGES := kmod-mt7615-firmware -uboot-envtools
+endef
+TARGET_DEVICES += arcadyan_we410443
 
 define Device/arcadyan_we420223-99
   $(Device/dsa-migration)
@@ -684,6 +701,19 @@ define Device/confiabits_mt7621-v1
 	-uboot-envtools
 endef
 TARGET_DEVICES += confiabits_mt7621-v1
+
+define Device/cudy_m1300-v2
+  $(Device/dsa-migration)
+  IMAGE_SIZE := 15872k
+  DEVICE_VENDOR := Cudy
+  DEVICE_MODEL := M1300
+  DEVICE_VARIANT := v2
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e kmod-mt7663-firmware-ap \
+	-uboot-envtools
+  UIMAGE_NAME := R15
+  SUPPORTED_DEVICES += R15
+endef
+TARGET_DEVICES += cudy_m1300-v2
 
 define Device/cudy_m1800
   $(Device/dsa-migration)
@@ -1058,23 +1088,11 @@ define Device/d-team_pbr-m1
 endef
 TARGET_DEVICES += d-team_pbr-m1
 
+# Branded version of Genexis / Inteno EX400 (difference is one LED)
 define Device/dna_valokuitu-plus-ex400
-  $(Device/dsa-migration)
-  IMAGE_SIZE := 117m
-  PAGESIZE := 2048
-  MKUBIFS_OPTS := --min-io-size=$$(PAGESIZE) --leb-size=124KiB --max-leb-cnt=96 \
-	--log-lebs=2 --space-fixup --squash-uids
+  $(Device/genexis_pulse-ex400/common)
   DEVICE_VENDOR := DNA
   DEVICE_MODEL := Valokuitu Plus EX400
-  KERNEL := kernel-bin | lzma | uImage lzma
-  KERNEL_INITRAMFS := kernel-bin | append-dtb | lzma | uImage lzma
-  IMAGES += factory.bin
-  IMAGE/factory.bin := append-image-stage initramfs-kernel.bin | \
-	dna-bootfs | dna-header | append-md5sum-ascii-salted
-  IMAGE/sysupgrade.bin := append-kernel | dna-bootfs | \
-  	sysupgrade-tar kernel=$$$$@ | check-size | append-metadata
-  DEVICE_IMG_NAME = $$(DEVICE_IMG_PREFIX)-$$(2)
-  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615-firmware kmod-usb3
 endef
 TARGET_DEVICES += dna_valokuitu-plus-ex400
 
@@ -1378,6 +1396,35 @@ define Device/gemtek_wvrtm-130acn
   DEVICE_PACKAGES += kmod-mt7615-firmware
 endef
 TARGET_DEVICES += gemtek_wvrtm-130acn
+
+# Common definitions shared between genexis_pulse-ex400 and dna_valokuitu-plus-ex400
+define Device/genexis_pulse-ex400/common
+  $(Device/dsa-migration)
+  IMAGE_SIZE := 117m
+  PAGESIZE := 2048
+  MKUBIFS_OPTS := --min-io-size=$$(PAGESIZE) --leb-size=124KiB --max-leb-cnt=96 \
+    --log-lebs=2 --space-fixup --squash-uids
+  KERNEL := kernel-bin | lzma | uImage lzma
+  KERNEL_INITRAMFS := kernel-bin | append-dtb | lzma | uImage lzma
+ifneq ($(CONFIG_TARGET_ROOTFS_INITRAMFS),)
+  IMAGES += factory.bin
+  IMAGE/factory.bin := append-image-stage initramfs-kernel.bin | \
+	inteno-bootfs | inteno-y3-header EX400 | append-md5sum-ascii-salted
+endif
+  IMAGE/sysupgrade.bin := append-kernel | inteno-bootfs | pad-to 10M | \
+    sysupgrade-tar kernel=$$$$@ | check-size | append-metadata
+  DEVICE_IMG_NAME = $$(DEVICE_IMG_PREFIX)-$$(2)
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615-firmware kmod-usb3 kmod-keyboard-sx951x kmod-button-hotplug
+endef
+
+define Device/genexis_pulse-ex400
+  $(Device/genexis_pulse-ex400/common)
+  DEVICE_VENDOR := Genexis
+  DEVICE_MODEL := Pulse EX400
+  DEVICE_ALT0_VENDOR := Inteno
+  DEVICE_ALT0_MODEL := Pulse EX400
+endef
+TARGET_DEVICES += genexis_pulse-ex400
 
 define Device/glinet_gl-mt1300
   $(Device/dsa-migration)
@@ -1963,6 +2010,8 @@ define Device/mercusys_mr70x-v1
   $(Device/tplink-safeloader)
   DEVICE_VENDOR := MERCUSYS
   DEVICE_MODEL := MR70X
+  DEVICE_ALT0_VENDOR := MERCUSYS
+  DEVICE_ALT0_MODEL := MR1800X
   DEVICE_VARIANT := v1
   DEVICE_PACKAGES := kmod-mt7915-firmware -uboot-envtools
   TPLINK_BOARD_ID := MR70X
@@ -2491,14 +2540,14 @@ endef
 TARGET_DEVICES += sim_simax1800t
 
 define Device/snr_snr-cpe-me1
-	$(Device/dsa-migration)
-	$(Device/uimage-lzma-loader)
-	IMAGE_SIZE := 15040k
-	DEVICE_VENDOR := SNR
-	DEVICE_MODEL := SNR-CPE-ME1
-	UIMAGE_NAME := SNR-CPE-ME1-5GHZ-MT
-	DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x0e kmod-usb3 \
-		kmod-usb-ledtrig-usbport uboot-envtools
+  $(Device/dsa-migration)
+  $(Device/uimage-lzma-loader)
+  IMAGE_SIZE := 15040k
+  DEVICE_VENDOR := SNR
+  DEVICE_MODEL := SNR-CPE-ME1
+  UIMAGE_NAME := SNR-CPE-ME1-5GHZ-MT
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x0e kmod-usb3 \
+	kmod-usb-ledtrig-usbport
 endef
 TARGET_DEVICES += snr_snr-cpe-me1
 
@@ -2521,8 +2570,8 @@ define Device/snr_snr-cpe-me2-sfp
   DEVICE_VENDOR := SNR
   DEVICE_MODEL := SNR-CPE-ME2-SFP
   UIMAGE_NAME := $$(DEVICE_MODEL)
-  DEVICE_PACKAGES := kmod-mt7615-firmware kmod-usb3 \
-	    kmod-sfp kmod-usb-ledtrig-usbport uboot-envtools
+  DEVICE_PACKAGES := kmod-mt7615-firmware kmod-usb3 kmod-sfp \
+	kmod-usb-ledtrig-usbport
 endef
 TARGET_DEVICES += snr_snr-cpe-me2-sfp
 
@@ -3101,8 +3150,7 @@ define Device/xiaomi_mi-router-3g
   $(Device/xiaomi_nand_separate)
   DEVICE_MODEL := Mi Router 3G
   IMAGE_SIZE := 124416k
-  DEVICE_PACKAGES += kmod-mt7603 kmod-mt76x2 kmod-usb3 \
-	kmod-usb-ledtrig-usbport -uboot-envtools
+  DEVICE_PACKAGES += kmod-mt7603 kmod-mt76x2 kmod-usb3 kmod-usb-ledtrig-usbport
   SUPPORTED_DEVICES += R3G mir3g xiaomi,mir3g
 endef
 TARGET_DEVICES += xiaomi_mi-router-3g
@@ -3168,7 +3216,7 @@ define Device/xiaomi_mi-router-ac2100
   $(Device/xiaomi_nand_separate)
   DEVICE_MODEL := Mi Router AC2100
   IMAGE_SIZE := 120320k
-  DEVICE_PACKAGES += kmod-mt7603 kmod-mt7615-firmware -uboot-envtools
+  DEVICE_PACKAGES += kmod-mt7603 kmod-mt7615-firmware
 endef
 TARGET_DEVICES += xiaomi_mi-router-ac2100
 

@@ -167,6 +167,17 @@ define Device/comfast_cf-wr758ac-v2
 endef
 TARGET_DEVICES += comfast_cf-wr758ac-v2
 
+define Device/cudy_m1200-v1
+  IMAGE_SIZE := 15872k
+  DEVICE_VENDOR := Cudy
+  DEVICE_MODEL := M1200
+  DEVICE_VARIANT := v1
+  DEVICE_PACKAGES := kmod-mt7615e kmod-mt7663-firmware-ap
+  UIMAGE_NAME := R22
+  SUPPORTED_DEVICES += R22
+endef
+TARGET_DEVICES += cudy_m1200-v1
+
 define Device/cudy_tr1200-v1
   IMAGE_SIZE := 15872k
   DEVICE_VENDOR := Cudy
@@ -1109,6 +1120,14 @@ define Device/xiaomi_mi-router-4c
   DEVICE_PACKAGES := uboot-envtools
 endef
 TARGET_DEVICES += xiaomi_mi-router-4c
+
+define Device/xiaomi_miwifi-3a
+  IMAGE_SIZE := 16064k
+  DEVICE_VENDOR := Xiaomi
+  DEVICE_MODEL := MiWiFi 3A
+  DEVICE_PACKAGES := kmod-mt76x2
+endef
+TARGET_DEVICES += xiaomi_miwifi-3a
 
 define Device/xiaomi_miwifi-3c
   IMAGE_SIZE := 15104k

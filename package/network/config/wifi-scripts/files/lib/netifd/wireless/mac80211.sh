@@ -12,7 +12,7 @@ MP_CONFIG_INT="mesh_retry_timeout mesh_confirm_timeout mesh_holding_timeout mesh
 	       mesh_hwmp_rann_interval mesh_gate_announcements mesh_sync_offset_max_neighor
 	       mesh_rssi_threshold mesh_hwmp_active_path_to_root_timeout mesh_hwmp_root_interval
 	       mesh_hwmp_confirmation_interval mesh_awake_window mesh_plink_timeout"
-MP_CONFIG_BOOL="mesh_auto_open_plinks mesh_fwding"
+MP_CONFIG_BOOL="mesh_auto_open_plinks mesh_fwding mesh_nolearn"
 MP_CONFIG_STRING="mesh_power_mode"
 
 wdev_tool() {
@@ -740,8 +740,10 @@ mac80211_prepare_vif() {
 
 mac80211_prepare_iw_htmode() {
 	case "$htmode" in
-		VHT20|HT20|HE20) iw_htmode=HT20;;
-		HT40*|VHT40|VHT160|HE40)
+		HT20|VHT20|HE20|EHT20)
+			iw_htmode=HT20
+		;;
+		HT40*|VHT40|HE40|EHT40)
 			case "$band" in
 				2g)
 					case "$htmode" in
@@ -765,8 +767,11 @@ mac80211_prepare_iw_htmode() {
 			esac
 			[ "$auto_channel" -gt 0 ] && iw_htmode="HT40+"
 		;;
-		VHT80|HE80)
-			iw_htmode="80MHZ"
+		VHT80|HE80|EHT80)
+			iw_htmode="80MHz"
+		;;
+		VHT160|HE160|EHT160)
+			iw_htmode="160MHz"
 		;;
 		NONE|NOHT)
 			iw_htmode="NOHT"
