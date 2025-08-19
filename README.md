@@ -11,7 +11,7 @@ git pull
 # Select a specific code revision
 git branch -a
 git tag
-git checkout v24.10.0-fritz.box.7490
+git checkout openwrt-24.10-fritz.box.7490
  
 # Update the feeds
 ./scripts/feeds update -a
